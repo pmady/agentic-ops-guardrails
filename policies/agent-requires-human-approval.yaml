@@ -1,0 +1,37 @@
+# Pattern 3: tier-2 changes need a human approver, and the agent cannot self-approve.
+# Applies to ConfigMaps and to Deployment updates that touch container resources or images.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: agent-requires-human-approval
+spec:
+  validationActions: [Deny]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [configmaps]
+    - apiGroups: [apps]
+      apiVersions: [v1]
+      operations: [UPDATE]
+      resources: [deployments]
+  matchConditions:
+  - name: agent-identity
+    expression: >-
+      request.userInfo.username == 'system:serviceaccount:agent-ops:remediation-agent'
+  - name: tier-2-change
+    expression: >-
+      object.kind == 'ConfigMap' ||
+      (has(oldObject.spec) && oldObject.spec.template != object.spec.template)
+  validations:
+  - expression: >-
+      has(object.metadata.annotations) &&
+      'ops.example.com/approved-by' in object.metadata.annotations &&
+      object.metadata.annotations['ops.example.com/approved-by'] != request.userInfo.username
+    message: "human approval is required; agents cannot self-approve"

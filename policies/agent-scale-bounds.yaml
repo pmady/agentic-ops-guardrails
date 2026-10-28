@@ -1,0 +1,34 @@
+# Pattern 1: allowlist what the remediation agent may do.
+# Only fires for the agent's ServiceAccount; humans are untouched.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: agent-scale-bounds
+spec:
+  validationActions: [Deny]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [apps]
+      apiVersions: [v1]
+      operations: [CREATE, UPDATE]
+      resources: [deployments, deployments/scale]
+  matchConditions:
+  - name: agent-identity
+    expression: >-
+      request.userInfo.username == 'system:serviceaccount:agent-ops:remediation-agent'
+  variables:
+  # Look the namespace up so the policy is testable with the Kyverno CLI (--context-file).
+  # In-cluster, `namespaceObject.metadata.labels` is an equivalent built-in variable.
+  - name: ns
+    expression: "resource.Get('v1', 'namespaces', '', object.metadata.namespace)"
+  validations:
+  - expression: >-
+      variables.ns.metadata.?labels.orValue({})[?'agent-ops/managed'].orValue('') == 'true'
+    message: "namespace not agent-managed"
+  - expression: "object.spec.replicas >= 1 && object.spec.replicas <= 10"
+    message: "replicas must be 1-10 for agent identity"

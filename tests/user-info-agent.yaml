@@ -1,0 +1,9 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: UserInfo
+metadata:
+  name: remediation-agent
+clusterRoles: []
+roles: []
+userInfo:
+  username: system:serviceaccount:agent-ops:remediation-agent
+  groups: [system:serviceaccounts, system:serviceaccounts:agent-ops, system:authenticated]

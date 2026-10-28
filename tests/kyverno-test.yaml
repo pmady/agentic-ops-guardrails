@@ -1,0 +1,50 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: agentic-ops-guardrails
+policies:
+- ../policies/agent-scale-bounds.yaml
+- ../policies/agent-hard-denies.yaml
+- ../policies/agent-requires-human-approval.yaml
+resources:
+- resources/deployments.yaml
+- resources/hard-denies.yaml
+- resources/approvals.yaml
+userinfo: user-info-agent.yaml
+context: context.yaml
+results:
+# Pattern 1: allowlist
+- policy: agent-scale-bounds
+  resources: [shop/checkout-scale-5]
+  kind: Deployment
+  result: pass
+- policy: agent-scale-bounds
+  resources: [shop/checkout-scale-0]
+  kind: Deployment
+  result: fail
+- policy: agent-scale-bounds
+  resources: [finance/payments-scale-5]
+  kind: Deployment
+  result: fail
+# Pattern 2: hard denies
+- policy: agent-hard-denies
+  resources: [shop/checkout-data]
+  kind: PersistentVolumeClaim
+  result: fail
+- policy: agent-hard-denies
+  resources: [shop/agent-wider-access]
+  kind: RoleBinding
+  result: fail
+# Pattern 3: human approval
+- policy: agent-requires-human-approval
+  resources: [shop/checkout-config-approved]
+  kind: ConfigMap
+  result: pass
+- policy: agent-requires-human-approval
+  resources: [shop/checkout-config-unapproved]
+  kind: ConfigMap
+  result: fail
+- policy: agent-requires-human-approval
+  resources: [shop/checkout-config-self-approved]
+  kind: ConfigMap
+  result: fail

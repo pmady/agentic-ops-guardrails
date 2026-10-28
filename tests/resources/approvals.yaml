@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: checkout-config-approved
+  namespace: shop
+  annotations:
+    ops.example.com/approved-by: jane.doe@example.com
+data: {LOG_LEVEL: info}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: checkout-config-unapproved
+  namespace: shop
+data: {LOG_LEVEL: debug}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: checkout-config-self-approved
+  namespace: shop
+  annotations:
+    ops.example.com/approved-by: system:serviceaccount:agent-ops:remediation-agent
+data: {LOG_LEVEL: debug}

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-scale-5
+  namespace: shop
+spec:
+  replicas: 5
+  selector: {matchLabels: {app: checkout}}
+  template:
+    metadata: {labels: {app: checkout}}
+    spec:
+      containers:
+      - name: checkout
+        image: registry.example.com/checkout:1.4.2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-scale-0
+  namespace: shop
+spec:
+  replicas: 0
+  selector: {matchLabels: {app: checkout}}
+  template:
+    metadata: {labels: {app: checkout}}
+    spec:
+      containers:
+      - name: checkout
+        image: registry.example.com/checkout:1.4.2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-scale-5
+  namespace: finance
+spec:
+  replicas: 5
+  selector: {matchLabels: {app: payments}}
+  template:
+    metadata: {labels: {app: payments}}
+    spec:
+      containers:
+      - name: payments
+        image: registry.example.com/payments:2.0.0

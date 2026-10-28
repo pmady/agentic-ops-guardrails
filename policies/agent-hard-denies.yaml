@@ -1,0 +1,27 @@
+# Pattern 2: things no agent identity may ever do.
+# Stateful data, RBAC, NetworkPolicy, and the policy engine's own resources.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: agent-hard-denies
+spec:
+  validationActions: [Deny]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups: ["", apps, rbac.authorization.k8s.io, networking.k8s.io, kyverno.io, policies.kyverno.io]
+      apiVersions: ["*"]
+      resources: [persistentvolumeclaims, namespaces, statefulsets,
+                  roles, rolebindings, clusterroles, clusterrolebindings,
+                  networkpolicies, validatingpolicies, policyexceptions]
+      operations: [CREATE, UPDATE, DELETE]
+  matchConditions:
+  - name: any-agent
+    expression: "request.userInfo.username.startsWith('system:serviceaccount:agent-ops:')"
+  validations:
+  - expression: "false"
+    message: "agents may not delete stateful data or modify their own guardrails"

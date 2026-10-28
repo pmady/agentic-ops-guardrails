@@ -1,0 +1,16 @@
+name: kyverno test
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Kyverno CLI
+        run: |
+          curl -sSL https://github.com/kyverno/kyverno/releases/download/v1.17.2/kyverno-cli_v1.17.2_linux_x86_64.tar.gz | tar -xz kyverno
+          sudo mv kyverno /usr/local/bin/kyverno
+          kyverno version
+      - name: Run policy tests
+        run: kyverno test tests
